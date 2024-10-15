@@ -3,6 +3,6 @@ class Node:
         self.x = x
         self.y = y
         self.movex, self.movey = move
-        self.radius = 120
+        self.radius = 30
     
     
