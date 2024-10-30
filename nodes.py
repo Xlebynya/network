@@ -14,11 +14,18 @@ class Node:
         self.id = id
         self.pos_x, self.pos_y = coordinates
         self.move_x, self.move_y = move
-        self.vision_radius = int(vision_radius * energy / 100)
         self.energy = energy
+        self.vision_radius = int(vision_radius * self.energy / 100)
         self.send_buffer: list = list()  # queue
         self.receive_buffer: set = set()  # set
         self.is_gate = False
+
+    def __str__(self) -> str:
+        return f"Node {self.id}: \
+            \n (x, y): ({self.pos_x}, {self.pos_y})\
+            \n energy: {self.energy}\
+            \n receive_buff: {self.receive_buffer}\
+            \n send_buff: {self.send_buffer}\n"
 
     def get_packages(self, msgs: list[str]) -> None:
         """Add packages from nowhere"""
@@ -34,24 +41,30 @@ class Node:
 
     def send(self, receiver: "Node") -> None:
         """Sends package to one receiver"""
-        if self.send_buffer == []:
-            return  # if there is no packages to send, stop
         if self.send_buffer[0] not in receiver.receive_buffer:
             receiver.send_buffer.append(self.send_buffer[0])
             receiver.receive_buffer.add(self.send_buffer[0])
 
     def send_to_all(self, nodes: list["Node"]) -> None:
         """Sends package to all than delete it and downgrades energy"""
-        if self.send_buffer == []:
-            return  # if there is no packages to send, stop
-        sended = 0
+        if self.is_gate:
+            self.send_buffer.clear()
+        if self.send_buffer == [] or self.energy <= 0:
+            return
+        sended = False
         for receiver in nodes:
-            if self.is_reachable(receiver):
+            if (
+                receiver.id != self.id
+                and self.is_reachable(receiver)
+                and receiver.energy > 0
+            ):
+                sended = True
                 self.send(receiver)
-                sended += 1
-        if sended > 1:
-            self.energy -= 5
-            self.vision_radius = int(self.vision_radius * self.energy / 100)
+        if sended:
+            self.energy -= settings.PRICE
+            self.vision_radius = int(
+                0.5 * settings.VISION_RADIUS * (1 + self.energy / 100)
+            )
             self.send_buffer.pop(0)
 
 
@@ -64,26 +77,16 @@ def create_nodes_list(count: int) -> list[Node]:
                 (random.randint(0, settings.WIDTH), random.randint(0, settings.HEIGHT)),
                 (random.randint(-5, 5), random.randint(-5, 5)),
                 id=i,
+                energy=random.randint(20, 100),
             )
         )
-    list[0].is_gate = True
     return list
 
 
-def fill_packages(nodes: list["Node"]) -> None:
-    """Fill all nodes with 1 uniq package"""
-    for node in nodes:
-        node.send_buffer.append(random.getrandbits(16))
-        node.receive_buffer.add(random.getrandbits(16))
-
-
-def info(nodes: list["Node"]) -> None:
-    """Prints all the info about nodes"""
-    for node in nodes:
-        print(f"Node {node.id}: ")
-        print(
-            f" (x, y): ({node.pos_x}, {node.pos_y})\
-            \n energy: {node.energy}\
-            \n receive_buff: {node.receive_buffer}\
-            \n send_buff: {node.send_buffer}\n"
-        )
+def fill_packages(nodes: list["Node"], num=1) -> None:
+    """Fill all nodes with NUM uniq package"""
+    for i in range(num):
+        for node in nodes:
+            pack = random.getrandbits(4)
+            node.send_buffer.append(pack)
+            node.receive_buffer.add(pack)
