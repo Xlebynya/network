@@ -18,6 +18,7 @@ class Node:
         self.energy = energy
         self.send_buffer: list = list()  # queue
         self.receive_buffer: set = set()  # set
+        self.is_gate = False
 
     def get_packages(self, msgs: list[str]) -> None:
         """Add packages from nowhere"""
@@ -65,6 +66,7 @@ def create_nodes_list(count: int) -> list[Node]:
                 id=i,
             )
         )
+    list[0].is_gate = True
     return list
 
 
