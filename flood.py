@@ -47,7 +47,7 @@ nodes[0].receive_buffer.clear()
 nodes[0].send_buffer.clear()
 nodes[0].vision_radius = 0
 nodes[0].move_x, nodes[0].move_y = (0, 0)
-nodes[0].pos_x, nodes[0].pos_y = (settings.WIDTH/2, settings.HEIGHT/2)
+# nodes[0].pos_x, nodes[0].pos_y = (settings.WIDTH/2, settings.HEIGHT/2)
 
 
 screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))

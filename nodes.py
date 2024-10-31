@@ -19,6 +19,7 @@ class Node:
         self.send_buffer: list = list()  # queue
         self.receive_buffer: set = set()  # set
         self.is_gate = False
+        self.is_midgate = False
 
     def __str__(self) -> str:
         return f"Node {self.id}: \
@@ -51,21 +52,18 @@ class Node:
             self.send_buffer.clear()
         if self.send_buffer == [] or self.energy <= 0:
             return
-        sended = False
         for receiver in nodes:
             if (
                 receiver.id != self.id
                 and self.is_reachable(receiver)
                 and receiver.energy > 0
             ):
-                sended = True
                 self.send(receiver)
-        if sended:
-            self.energy -= settings.PRICE
-            self.vision_radius = int(
-                0.5 * settings.VISION_RADIUS * (1 + self.energy / 100)
-            )
-            self.send_buffer.pop(0)
+        self.energy -= settings.PRICE
+        self.vision_radius = int(
+            0.5 * settings.VISION_RADIUS * (1 + self.energy / 100)
+        )
+        self.send_buffer.pop(0)
 
 
 def create_nodes_list(count: int) -> list[Node]:
