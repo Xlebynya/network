@@ -3,22 +3,46 @@ from nodes import create_nodes_list, fill_packages
 
 
 def paint(nodes: list):
+    def drawline(node, receiver):
+        pygame.draw.line(
+            screen,
+            "#666666",
+            (node.pos_x, node.pos_y),
+            (receiver.pos_x, receiver.pos_y),
+        )
+
     screen.fill("#1F1F1F1F")
 
     for node in nodes:
-        for receiver in nodes:
-            if node.energy > 0 and receiver.energy > 0:
-                if node.is_reachable(receiver):
-                    pygame.draw.line(
-                        screen,
-                        "#666666",
-                        (node.pos_x, node.pos_y),
-                        (receiver.pos_x, receiver.pos_y),
-                    )
-    for node in nodes:
-        if node.is_gate:
-            pygame.draw.circle(screen, "#12c211", (node.pos_x, node.pos_y), 5)
+        if node.energy == 0:
+                continue
+        if (
+            node.pos_x <= settings.WIDTH / 4 * 3
+            and node.pos_x >= settings.WIDTH / 4
+            and node.pos_y <= settings.HEIGHT / 4 * 3
+            and node.pos_y >= settings.HEIGHT / 4
+        ):
+            for receiver in nodes:
+                if receiver.order == 0:
+                    drawline(node, receiver)
+
         else:
+            
+            node.vision_radius = 0
+            found = False
+            while found == False:
+                node.vision_radius += 1
+                for receiver in nodes:
+                    if receiver.order == 1 and node.is_reachable(receiver):
+                        drawline(node, receiver)
+                        found = True
+
+    for node in nodes:
+        if node.order == 0:
+            pygame.draw.circle(screen, "#12c212", (node.pos_x, node.pos_y), 5)
+        if node.order == 1:
+            pygame.draw.circle(screen, "#c21212", (node.pos_x, node.pos_y), 5)
+        if node.order == 3:
             if node.energy <= 0:
                 pygame.draw.circle(screen, "#353535", (node.pos_x, node.pos_y), 5)
             else:
@@ -41,13 +65,11 @@ pygame.init()
 nodes = create_nodes_list(settings.COUNT)
 
 fill_packages(nodes, 3)
-
-nodes[0].is_gate = True
-nodes[0].receive_buffer.clear()
-nodes[0].send_buffer.clear()
-nodes[0].vision_radius = 0
-nodes[0].move_x, nodes[0].move_y = (0, 0)
-# nodes[0].pos_x, nodes[0].pos_y = (settings.WIDTH/2, settings.HEIGHT/2)
+nodes[0].to_gate()
+nodes[1].to_router(1)
+nodes[2].to_router(2)
+nodes[3].to_router(3)
+nodes[4].to_router(4)
 
 
 screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))
