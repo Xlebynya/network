@@ -19,6 +19,8 @@ class Node:
         self.send_buffer: list = list()  # queue
         self.receive_buffer: set = set()  # set
         self.is_gate = False
+        self.is_clusterhead = False
+        self.cluster = 1
 
     def __str__(self) -> str:
         return f"Node {self.id}: \
@@ -49,22 +51,18 @@ class Node:
         """Sends package to all than delete it and downgrades energy"""
         if self.is_gate:
             self.send_buffer.clear()
-        if self.send_buffer == [] or self.energy <= 0:
+        if self.energy <= 0:
             return
-        sended = False
         for receiver in nodes:
-            if (
-                receiver.id != self.id
-                and self.is_reachable(receiver)
-                and receiver.energy > 0
-            ):
-                sended = True
-                self.send(receiver)
-        if sended:
-            self.energy -= settings.PRICE
-            self.vision_radius = int(
-                0.5 * settings.VISION_RADIUS * (1 + self.energy / 100)
-            )
+            if self.send_buffer != []:
+                if (receiver.is_clusterhead and receiver.id != self.id) or (
+                    self.is_clusterhead and receiver.is_gate
+                ):
+                    self.send(receiver)
+        self.energy -= settings.PRICE
+        if self.energy < 0:
+            self.energy = 0
+        if self.send_buffer != []:
             self.send_buffer.pop(0)
 
 
